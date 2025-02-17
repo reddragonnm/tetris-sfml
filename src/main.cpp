@@ -19,11 +19,15 @@ void displayGrid(sf::RenderWindow& window) {
 int main()
 {
     sf::RenderWindow window{ sf::VideoMode({squareSize * numCols, squareSize * numRows}), "Tetris" };
+    window.setKeyRepeatEnabled(false);
+
+    bool movePieceDown{ false };
 
     Game game{};
 
     sf::Clock clock;
-    sf::Time pieceDownInterval{ sf::seconds(1.f) };
+    sf::Time autoPieceDownInterval{ sf::seconds(1.f) };
+    sf::Time movePieceDownInterval{ sf::seconds(0.07f) };
 
     while (window.isOpen())
     {
@@ -44,19 +48,24 @@ int main()
                     break;
 
                 case Scancode::Up:
-                    game.rotatePieceLeft();
+                    game.rotatePiece();
                     break;
 
                 case Scancode::Down:
-                    game.rotatePieceRight();
+                    movePieceDown = true;
                     break;
+                }
+            }
+            else if (const auto* keyReleased = event->getIf<sf::Event::KeyReleased>()) {
+                if (keyReleased->scancode == sf::Keyboard::Scancode::Down) {
+                    movePieceDown = false;
                 }
             }
         }
 
         window.clear();
 
-        if (clock.getElapsedTime() >= pieceDownInterval) {
+        if ((clock.getElapsedTime() >= autoPieceDownInterval) || (movePieceDown && clock.getElapsedTime() >= movePieceDownInterval)) {
             game.movePieceDown();
             clock.restart();
         }

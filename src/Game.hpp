@@ -16,6 +16,7 @@ class Game {
     const Piece::Piece* m_piece{ nullptr };
     std::pair<int, int> m_piecePos;
     sf::Color m_pieceColor;
+    int m_rotationNum;
 
     std::pair<int, int> getSpawnPos() {
         return { (numCols - m_piece->numSquares) / 2, 0 };
@@ -29,6 +30,7 @@ class Game {
         m_piece = Piece::getRandomPiece();
         m_piecePos = getSpawnPos();
         m_pieceColor = getRandomColor();
+        m_rotationNum = 0;
     }
 
 public:
@@ -48,12 +50,8 @@ public:
         m_piecePos.first++;
     }
 
-    void rotatePieceLeft() {
-
-    }
-
-    void rotatePieceRight() {
-
+    void rotatePiece() {
+        m_rotationNum = (m_rotationNum + 1) % 4;
     }
 
     void displayBoard(sf::RenderWindow& window) {
@@ -71,7 +69,7 @@ public:
             }
         }
 
-        for (const auto& coord : m_piece->pieceCoords) {
+        for (const auto& coord : m_piece->rotationData[m_rotationNum]) {
             auto x = m_piecePos.first + coord.first;
             auto y = m_piecePos.second + coord.second;
 

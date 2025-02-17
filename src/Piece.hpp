@@ -10,8 +10,26 @@ namespace Piece {
     struct Piece {
         int numSquares;
         PieceCoords pieceCoords;
+        std::array<PieceCoords, 4> rotationData;
 
-        constexpr Piece(int numSquares, PieceCoords pieceCoords) : numSquares(numSquares), pieceCoords(pieceCoords) {}
+        constexpr Piece(int numSquares, PieceCoords pieceCoords) : numSquares(numSquares), pieceCoords(pieceCoords) {
+            for (int i = 0; i < 4; i++) {
+                PieceCoords coords{};
+
+                for (int j = 0; j < 4; j++) {
+
+                    std::pair<int, int> newCoord{ pieceCoords[j] };
+                    for (int k = 0; k < i; k++) {
+                        std::swap(newCoord.first, newCoord.second);
+                        newCoord.first = numSquares - newCoord.first - 1;
+                    }
+
+                    coords[j] = newCoord;
+                }
+
+                rotationData[i] = coords;
+            }
+        }
     };
 
     constexpr Piece pieceO{ 2, {{ {0, 0}, {1, 0}, {0, 1}, {1, 1} }} };
