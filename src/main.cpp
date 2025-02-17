@@ -1,5 +1,7 @@
 #include <SFML/Graphics.hpp>
 
+#include <set>
+
 #include "Game.hpp"
 
 void displayGrid(sf::RenderWindow& window) {
@@ -23,11 +25,21 @@ int main()
 
     bool movePieceDown{ false };
 
+    enum class Movement {
+        LEFT,
+        RIGHT,
+        DOWN,
+        NONE
+    };
+    Movement movement;
+
     Game game{};
 
-    sf::Clock clock;
+    sf::Clock pieceDownclock;
     sf::Time autoPieceDownInterval{ sf::seconds(1.f) };
-    sf::Time movePieceDownInterval{ sf::seconds(0.07f) };
+
+    sf::Clock moveClock;
+    sf::Time movePieceInterval{ sf::seconds(0.07f) };
 
     while (window.isOpen())
     {
@@ -40,11 +52,13 @@ int main()
 
                 switch (keyPressed->scancode) {
                 case Scancode::Left:
-                    game.movePieceLeft();
+                    movement = Movement::LEFT;
+                    moveClock.start();
                     break;
 
                 case Scancode::Right:
-                    game.movePieceRight();
+                    movement = Movement::RIGHT;
+                    moveClock.start();
                     break;
 
                 case Scancode::Up:
@@ -52,22 +66,51 @@ int main()
                     break;
 
                 case Scancode::Down:
-                    movePieceDown = true;
+                    movement = Movement::DOWN;
+                    moveClock.start();
+                    break;
+
+                case Scancode::Space:
+                    game.dropDown();
                     break;
                 }
             }
             else if (const auto* keyReleased = event->getIf<sf::Event::KeyReleased>()) {
-                if (keyReleased->scancode == sf::Keyboard::Scancode::Down) {
-                    movePieceDown = false;
+                using sf::Keyboard::Scancode;
+                std::set keys{ Scancode::Left, Scancode::Right, Scancode::Down };
+
+                if (keys.count(keyReleased->scancode) != 0) {
+                    movement = Movement::NONE;
+                    moveClock.reset();
                 }
             }
         }
 
         window.clear();
 
-        if ((clock.getElapsedTime() >= autoPieceDownInterval) || (movePieceDown && clock.getElapsedTime() >= movePieceDownInterval)) {
+        if (pieceDownclock.getElapsedTime() >= autoPieceDownInterval) {
             game.movePieceDown();
-            clock.restart();
+            game.handleCollision();
+            pieceDownclock.restart();
+        }
+
+        if (moveClock.getElapsedTime() >= movePieceInterval) {
+            switch (movement) {
+            case Movement::LEFT:
+                game.movePieceLeft();
+                break;
+
+            case Movement::RIGHT:
+                game.movePieceRight();
+                break;
+
+            case Movement::DOWN:
+                game.movePieceDown();
+                game.handleCollision();
+                break;
+            }
+
+            moveClock.restart();
         }
 
         game.displayBoard(window);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Piece.hpp"
+#include "Random.hpp"
 
 #include <SFML/Graphics.hpp>
 
@@ -23,7 +24,7 @@ class Game {
     }
 
     sf::Color getRandomColor() {
-        return sf::Color::Red;
+        return sf::Color{ Random::get(0, 255), Random::get(0, 255), Random::get(0, 255) };
     }
 
     void setNewPiece() {
@@ -38,7 +39,7 @@ class Game {
             auto x = m_piecePos.first + coord.first;
             auto y = m_piecePos.second + coord.second;
 
-            if (x < 0 || x >= numCols)
+            if (x < 0 || x >= numCols || m_board[y][x] != sf::Color::Black)
                 return false;
         }
         return true;
@@ -49,8 +50,41 @@ public:
         setNewPiece();
     }
 
+    bool handleCollision() {
+        bool hasCollided{ false };
+        for (const auto& coord : m_piece->rotationData[m_rotationNum]) {
+            auto x = m_piecePos.first + coord.first;
+            auto y = m_piecePos.second + coord.second;
+
+            if (y >= numRows || m_board[y][x] != sf::Color::Black) {
+                hasCollided = true;
+                break;
+            }
+        }
+
+        if (hasCollided) {
+            m_piecePos.second--;
+            for (const auto& coord : m_piece->rotationData[m_rotationNum]) {
+                auto x = m_piecePos.first + coord.first;
+                auto y = m_piecePos.second + coord.second;
+
+                m_board[y][x] = m_pieceColor;
+            }
+
+            setNewPiece();
+        }
+
+        return hasCollided;
+    }
+
     void movePieceDown() {
         m_piecePos.second++;
+    }
+
+    void dropDown() {
+        while (!handleCollision()) {
+            movePieceDown();
+        }
     }
 
     void movePieceLeft() {
