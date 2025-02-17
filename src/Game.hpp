@@ -33,6 +33,17 @@ class Game {
         m_rotationNum = 0;
     }
 
+    bool inBoundsLR() {
+        for (const auto& coord : m_piece->rotationData[m_rotationNum]) {
+            auto x = m_piecePos.first + coord.first;
+            auto y = m_piecePos.second + coord.second;
+
+            if (x < 0 || x >= numCols)
+                return false;
+        }
+        return true;
+    }
+
 public:
     Game() {
         setNewPiece();
@@ -44,14 +55,18 @@ public:
 
     void movePieceLeft() {
         m_piecePos.first--;
+        if (!inBoundsLR()) m_piecePos.first++;
     }
 
     void movePieceRight() {
         m_piecePos.first++;
+        if (!inBoundsLR()) m_piecePos.first--;
+
     }
 
     void rotatePiece() {
         m_rotationNum = (m_rotationNum + 1) % 4;
+        if (!inBoundsLR()) m_piecePos.first = std::clamp(m_piecePos.first, 0, numCols - m_piece->numSquares);
     }
 
     void displayBoard(sf::RenderWindow& window) {
