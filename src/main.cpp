@@ -5,15 +5,19 @@
 #include "Game.hpp"
 
 void displayGrid(sf::RenderWindow& window) {
+    std::uint8_t gridColor{ 30 };
+
     for (int i = 1; i < numCols; i++) {
         sf::RectangleShape line{ {1.f, (float)squareSize * numRows} };
         line.setPosition({ (float)i * squareSize, 0 });
+        line.setFillColor(sf::Color{ gridColor, gridColor, gridColor });
         window.draw(line);
     }
 
     for (int i = 1; i < numRows; i++) {
         sf::RectangleShape line{ {(float)squareSize * numCols, 1.f} };
         line.setPosition({ 0, (float)i * squareSize });
+        line.setFillColor(sf::Color{ gridColor, gridColor, gridColor });
         window.draw(line);
     }
 }
@@ -39,14 +43,15 @@ int main()
     sf::Time autoPieceDownInterval{ sf::seconds(1.f) };
 
     sf::Clock moveClock;
-    sf::Time movePieceInterval{ sf::seconds(0.07f) };
+    sf::Time movePieceInterval{ sf::seconds(0.1f) };
 
-    while (window.isOpen())
+    while (window.isOpen() && !game.isGameOver())
     {
         while (const std::optional event = window.pollEvent())
         {
             if (event->is<sf::Event::Closed>())
                 window.close();
+
             else if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>()) {
                 using sf::Keyboard::Scancode;
 
@@ -112,6 +117,8 @@ int main()
 
             moveClock.restart();
         }
+
+        game.handleLineClears();
 
         game.displayBoard(window);
         displayGrid(window);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <algorithm>
+
 #include "Piece.hpp"
 #include "Random.hpp"
 
@@ -14,10 +16,13 @@ using Board = std::array<std::array<sf::Color, numCols>, numRows>;
 
 class Game {
     Board m_board;
+
     const Piece::Piece* m_piece{ nullptr };
     std::pair<int, int> m_piecePos;
     sf::Color m_pieceColor;
     int m_rotationNum;
+
+    bool m_isGameOver{ false };
 
     std::pair<int, int> getSpawnPos() {
         return { (numCols - m_piece->numSquares) / 2, 0 };
@@ -28,10 +33,23 @@ class Game {
     }
 
     void setNewPiece() {
+        // TODO: check if piece coincides with blocks already on board
+
         m_piece = Piece::getRandomPiece();
         m_piecePos = getSpawnPos();
         m_pieceColor = getRandomColor();
         m_rotationNum = 0;
+
+        bool valid{ true };
+        for (const auto& coord : m_piece->rotationData[m_rotationNum]) {
+            auto x = m_piecePos.first + coord.first;
+            auto y = m_piecePos.second + coord.second;
+
+            if (m_board[y][x] != sf::Color::Black) {
+                m_isGameOver = true;
+                break;
+            }
+        }
     }
 
     bool inBoundsLR() {
@@ -48,6 +66,10 @@ class Game {
 public:
     Game() {
         setNewPiece();
+    }
+
+    bool isGameOver() {
+        return m_isGameOver;
     }
 
     bool handleCollision() {
@@ -75,6 +97,32 @@ public:
         }
 
         return hasCollided;
+    }
+
+    void handleLineClears() {
+        int j{ numRows - 1 };
+        for (int i = numRows - 1; i >= 0; i--) {
+            bool isFilled{ true };
+            for (const auto& c : m_board[j]) {
+                if (c == sf::Color::Black) isFilled = false;
+            }
+
+            if (isFilled) j--;
+
+            if (i == j) {
+                j--;
+                continue;
+            }
+
+            if (j >= 0)
+                m_board[i] = m_board[j];
+            else {
+                std::array<sf::Color, numCols> s;
+                m_board[i] = s;
+            }
+
+            j--;
+        }
     }
 
     void movePieceDown() {
