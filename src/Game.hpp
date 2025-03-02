@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <vector>
 
 #include "Piece.hpp"
 #include "Random.hpp"
@@ -23,13 +24,24 @@ class Game {
     int m_rotationNum;
 
     bool m_isGameOver{ false };
+    int m_score{ 0 };
 
     std::pair<int, int> getSpawnPos() {
         return { (numCols - m_piece->numSquares) / 2, 0 };
     }
 
     sf::Color getRandomColor() {
-        return sf::Color{ Random::get(0, 255), Random::get(0, 255), Random::get(0, 255) };
+        static std::vector<sf::Color> colors{
+            {255, 255, 0},
+            {0, 255, 255},
+            {128, 0, 128},
+            {0, 255, 0},
+            {255, 0, 0},
+            {0, 0, 255},
+            {255, 165, 0}
+        };
+
+        return colors[Random::get(0, static_cast<int>(colors.size()) - 1)];
     }
 
     void setNewPiece() {
@@ -68,9 +80,9 @@ public:
         setNewPiece();
     }
 
-    bool isGameOver() {
-        return m_isGameOver;
-    }
+    bool isGameOver() { return m_isGameOver; }
+
+    int getScore() { return m_score; }
 
     bool handleCollision() {
         bool hasCollided{ false };
@@ -100,6 +112,8 @@ public:
     }
 
     void handleLineClears() {
+        int lineClears{ 0 };
+
         int j{ numRows - 1 };
         for (int i = numRows - 1; i >= 0; i--) {
             bool isFilled{ true };
@@ -107,7 +121,10 @@ public:
                 if (c == sf::Color::Black) isFilled = false;
             }
 
-            if (isFilled) j--;
+            if (isFilled) {
+                j--;
+                lineClears++;
+            }
 
             if (i == j) {
                 j--;
@@ -123,6 +140,8 @@ public:
 
             j--;
         }
+
+        m_score += (lineClears * lineClears) * 10;
     }
 
     void movePieceDown() {
@@ -158,7 +177,7 @@ public:
 
                 if (sqColor != sf::Color::Black) {
                     sf::RectangleShape square{ {squareSize, squareSize} };
-                    square.setPosition({ (float)j * squareSize, (float)i * squareSize });
+                    square.setPosition({ static_cast<float>(j) * squareSize, static_cast<float>(i) * squareSize });
                     square.setFillColor(sqColor);
 
                     window.draw(square);
@@ -171,7 +190,7 @@ public:
             auto y = m_piecePos.second + coord.second;
 
             sf::RectangleShape square{ {squareSize, squareSize} };
-            square.setPosition({ (float)x * squareSize, (float)y * squareSize });
+            square.setPosition({ static_cast<float>(x) * squareSize, static_cast<float>(y) * squareSize });
             square.setFillColor(m_pieceColor);
 
             window.draw(square);
